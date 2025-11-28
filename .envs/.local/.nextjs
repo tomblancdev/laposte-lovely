@@ -1,0 +1,2 @@
+SESSION_SECRET="x9twRYUt5DP6Vh1fhchzadkLw6jmkkP7hjXa57w8szg="
+BACKEND_INTERNAL_URL="http://django:8000/"

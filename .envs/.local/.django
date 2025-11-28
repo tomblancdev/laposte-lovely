@@ -1,0 +1,15 @@
+# General
+# ------------------------------------------------------------------------------
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+FRONTEND_BASE_URL="http://localhost:3000/"
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=tBciWVsyFjkzlIfvYDkGXZhoPSEudEdv
+CELERY_FLOWER_PASSWORD=Qj1Ia11bScSQ0ZwtmVXgUGgEVw3ODTKdlGTAOFoGQ3OCCLLj09NUInxaUhVs0qIV
