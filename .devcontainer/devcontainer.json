@@ -1,6 +1,6 @@
 // For format details, see https://containers.dev/implementors/json_reference/
 {
-    "name": "django-overtuned_dev",
+    "name": "laposte-lovely_dev",
     "dockerComposeFile": [
         "../docker-compose.local.yml"
     ],
