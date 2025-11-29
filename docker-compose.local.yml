@@ -1,15 +1,15 @@
 volumes:
-  django-overtuned_local_postgres_data: {}
-  django-overtuned_local_postgres_data_backups: {}
-  django-overtuned_local_redis_data: {}
+  laposte-lovely_local_postgres_data: {}
+  laposte-lovely_local_postgres_data_backups: {}
+  laposte-lovely_local_redis_data: {}
 
 services:
   django: &django
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
-    image: django-overtuned_local_django
-    container_name: django-overtuned_local_django
+    image: laposte-lovely_local_django
+    container_name: laposte-lovely_local_django
     depends_on:
       - postgres
       - redis
@@ -27,8 +27,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/nextjs/Dockerfile
-    image: django-overtuned_local_nextjs
-    container_name: django-overtuned_local_nextjs
+    image: laposte-lovely_local_nextjs
+    container_name: laposte-lovely_local_nextjs
     depends_on:
       - django
     volumes:
@@ -42,31 +42,31 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
-    image: django-overtuned_production_postgres
-    container_name: django-overtuned_local_postgres
+    image: laposte-lovely_production_postgres
+    container_name: laposte-lovely_local_postgres
     volumes:
-      - django-overtuned_local_postgres_data:/var/lib/postgresql/data
-      - django-overtuned_local_postgres_data_backups:/backups
+      - laposte-lovely_local_postgres_data:/var/lib/postgresql/data
+      - laposte-lovely_local_postgres_data_backups:/backups
     env_file:
       - ./.envs/.local/.postgres
 
   mailpit:
     image: docker.io/axllent/mailpit:latest
-    container_name: django-overtuned_local_mailpit
+    container_name: laposte-lovely_local_mailpit
     ports:
       - "8025:8025"
 
   redis:
     image: docker.io/redis:6
-    container_name: django-overtuned_local_redis
+    container_name: laposte-lovely_local_redis
 
     volumes:
-      - django-overtuned_local_redis_data:/data
+      - laposte-lovely_local_redis_data:/data
 
   celeryworker:
     <<: *django
-    image: django-overtuned_local_celeryworker
-    container_name: django-overtuned_local_celeryworker
+    image: laposte-lovely_local_celeryworker
+    container_name: laposte-lovely_local_celeryworker
     depends_on:
       - redis
       - postgres
@@ -76,8 +76,8 @@ services:
 
   celerybeat:
     <<: *django
-    image: django-overtuned_local_celerybeat
-    container_name: django-overtuned_local_celerybeat
+    image: laposte-lovely_local_celerybeat
+    container_name: laposte-lovely_local_celerybeat
     depends_on:
       - redis
       - postgres
@@ -87,8 +87,8 @@ services:
 
   flower:
     <<: *django
-    image: django-overtuned_local_flower
-    container_name: django-overtuned_local_flower
+    image: laposte-lovely_local_flower
+    container_name: laposte-lovely_local_flower
     ports:
       - '5555:5555'
     command: /start-flower
