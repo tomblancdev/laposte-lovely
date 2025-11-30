@@ -89,10 +89,12 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    "taggit",
 ]
 
 LOCAL_APPS = [
     "django_overtuned.users",
+    "django_overtuned.user_tags",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
