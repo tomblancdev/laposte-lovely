@@ -3,7 +3,7 @@ FROM docker.io/python:3.12.12-slim-bookworm AS python
 
 FROM node:23.9.0-bookworm-slim AS node
 
-FROM ghcr.io/biomejs/biome:2.3.3 AS biome
+FROM ghcr.io/biomejs/biome:2.3.8 AS biome
 
 # Python build stage
 FROM python AS python-build-stage
