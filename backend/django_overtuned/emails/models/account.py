@@ -48,6 +48,8 @@ class EmailAccount(models.Model):
         "id",
     )
 
+    email_folders: models.Manager[EmailFolder]
+
     class Meta:
         verbose_name = _("Email Account")
         verbose_name_plural = _("Email Accounts")

@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from libs.db import ColorField
 from taggit.managers import TaggableManager
 
 from django_overtuned.user_tags.models import UserTaggedItem
@@ -38,12 +39,6 @@ class EmailPersonalization(models.Model):
         help_text=_("Tags associated with this email."),
     )
 
-    def get_user(self):
-        """Get the user from the email's folder's account."""
-        if self.email.folder and self.email.folder.account:
-            return self.email.folder.account.user
-        return None
-
     notes = models.TextField(
         blank=True,
         verbose_name=_("Notes"),
@@ -59,6 +54,12 @@ class EmailPersonalization(models.Model):
 
     def __str__(self):
         return f"Personalization for Email [{self.email}]"
+
+    def get_user(self):
+        """Get the user from the email's folder's account."""
+        if self.email.folder and self.email.folder.account:
+            return self.email.folder.account.user
+        return None
 
 
 class EmailFolderPersonalization(models.Model):
@@ -78,17 +79,14 @@ class EmailFolderPersonalization(models.Model):
         related_name="personalization",
     )
 
-    def get_user(self):
-        """Get the user from the folder's account."""
-        if self.folder and self.folder.account:
-            return self.folder.account.user
-        return None
-
-    display_color = models.CharField(
-        max_length=7,
+    display_color = ColorField(
+        max_length=50,
         blank=True,
         verbose_name=_("Display Color"),
-        help_text=_("The display color for this email folder in HEX format."),
+        help_text=_(
+            "The display color for this email folder. "
+            "Supports HEX (#RRGGBB), RGB, RGBA, HSL, HSLA, and CSS named colors.",
+        ),
         default="",
     )
 
@@ -113,3 +111,9 @@ class EmailFolderPersonalization(models.Model):
 
     def __str__(self):
         return f"Personalization for Folder [{self.folder}]"
+
+    def get_user(self):
+        """Get the user from the folder's account."""
+        if self.folder and self.folder.account:
+            return self.folder.account.user
+        return None

@@ -23,9 +23,9 @@ class EmailAddresses(models.Model):
     )
 
     # Reverse relations
-    emails_from: models.QuerySet[Email]
-    emails_to: models.QuerySet[Email]
-    emails_reply_to: models.QuerySet[Email]
+    emails_from: models.Manager[Email]
+    emails_to: models.Manager[Email]
+    emails_reply_to: models.Manager[Email]
 
     class Meta:
         verbose_name = _("Email Address")
