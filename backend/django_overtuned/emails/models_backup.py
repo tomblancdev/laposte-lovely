@@ -10,11 +10,19 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from taggit.managers import TaggableManager
 
+from django_overtuned.user_tags.models import UserTaggedItem
+
 User = get_user_model()
 cipher_suite = Fernet(os.environ.get("FERNET_KEY"))
 
 
 class EmailAccount(models.Model):
+    """
+    Represents an email account associated with a user.
+
+    This is a base class for different types of email accounts.
+    """
+
     user: models.OneToOneField[User] = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -83,59 +91,104 @@ class EmailAccount(models.Model):
         raise NotImplementedError(msg)
 
 
-class ExchangeEmailAccount(EmailAccount):
-    server_address = models.CharField(
-        max_length=255,
-        null=False,
-        verbose_name=_("Server Address"),
-        help_text=_("The address of the Exchange server."),
-    )
-    username = models.CharField(
-        max_length=255,
-        null=False,
-        verbose_name=_("Username"),
-        help_text=_("The username for the Exchange account."),
-    )
-    email_address = models.EmailField(
-        null=False,
-        verbose_name=_("Email Address"),
-        help_text=_("The email address associated with the Exchange account."),
-    )
-    password_encrypted = models.BinaryField(
-        null=False,
-        verbose_name=_("Encrypted Password"),
-        help_text=_("The encrypted password for the Exchange account."),
-        editable=False,
-    )
+try:
+    from exchangelib import DELEGATE
+    from exchangelib import Account
+    from exchangelib import Configuration
+    from exchangelib import Credentials
 
-    class Meta:
-        verbose_name = _("Exchange Email Account")
-        verbose_name_plural = _("Exchange Email Accounts")
+    class ExchangeEmailAccount(EmailAccount):
+        """
+        Represents an Exchange email account.
+        """
 
-    def __str__(self):
-        return f"Exchange Account: {self.email_address} ({self.user})"
+        server_address = models.CharField(
+            max_length=255,
+            null=False,
+            verbose_name=_("Server Address"),
+            help_text=_("The address of the Exchange server."),
+        )
+        username = models.CharField(
+            max_length=255,
+            null=False,
+            verbose_name=_("Username"),
+            help_text=_("The username for the Exchange account."),
+        )
+        email_address = models.EmailField(
+            null=False,
+            verbose_name=_("Email Address"),
+            help_text=_("The email address associated with the Exchange account."),
+        )
+        password_encrypted = models.BinaryField(
+            null=False,
+            verbose_name=_("Encrypted Password"),
+            help_text=_("The encrypted password for the Exchange account."),
+            editable=False,
+        )
 
-    @property
-    def password(self) -> str:
-        # Decrypt the password before returning it
-        decrypted_password = cipher_suite.decrypt(self.password_encrypted)
-        return decrypted_password.decode()
+        class Meta:
+            verbose_name = _("Exchange Email Account")
+            verbose_name_plural = _("Exchange Email Accounts")
 
-    @password.setter
-    def password(self, raw_password: str):
-        # Encrypt the password before storing it
-        encrypted_password = cipher_suite.encrypt(raw_password.encode())
-        self.password_encrypted = encrypted_password
-        # Optionally, you can clear the raw password from memory
-        raw_password = None
+        def __str__(self):
+            return f"Exchange Account: {self.email_address} ({self.user})"
+
+        @property
+        def password(self) -> str:
+            # Decrypt the password before returning it
+            decrypted_password = cipher_suite.decrypt(self.password_encrypted)
+            return decrypted_password.decode()
+
+        @password.setter
+        def password(self, raw_password: str):
+            # Encrypt the password before storing it
+            encrypted_password = cipher_suite.encrypt(raw_password.encode())
+            self.password_encrypted = encrypted_password
+            # Optionally, you can clear the raw password from memory
+            raw_password = None
+
+        def connect(self) -> bool:
+            try:
+                creds = Credentials(
+                    username=self.username,
+                    password=self.password,
+                )
+                config = Configuration(
+                    server=self.server_address,
+                    credentials=creds,
+                )
+                self._account = Account(
+                    access_type=DELEGATE,
+                    credentials=creds,
+                    config=config,
+                    autodiscover=False,
+                    primary_smtp_address=self.email_address,
+                )
+            except (ConnectionError, TimeoutError, ValueError, AttributeError):
+                # Log the exception as needed
+                return False
+            else:
+                return True
+
+except ImportError:
+    Account = None
 
 
 class EmailAddresses(models.Model):
+    """
+    Email address model.
+    """
+
     address = models.EmailField(
         null=False,
         unique=True,
         db_index=True,
     )
+
+    # Reverse relations
+    emails_from: models.QuerySet[Email]
+    emails_to: models.QuerySet[Email]
+    emails_reply_to: models.QuerySet[Email]
 
     class Meta:
         verbose_name = _("Email Address")
@@ -146,12 +199,19 @@ class EmailAddresses(models.Model):
 
 
 class EmailFolder(models.Model):
+    """
+    Email folder model.
+
+    This model is used to keep raw information about email folders.
+    """
+
     user: models.ForeignKey[User] = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name=_("User"),
         help_text=_("The user associated with this email folder."),
         editable=False,
+        related_name="email_folders",
     )
 
     base_name = models.CharField(
@@ -170,6 +230,11 @@ class EmailFolder(models.Model):
         editable=False,
     )
 
+    # Reverse relations
+    subfolders: models.QuerySet[EmailFolder]
+    emails: models.QuerySet[Email]
+    personalization: EmailFolderPersonalization | None
+
     class Meta:
         verbose_name = _("Email Folder")
         verbose_name_plural = _("Email Folders")
@@ -179,6 +244,13 @@ class EmailFolder(models.Model):
 
 
 class Email(models.Model):
+    """
+    Email model.
+
+    Represents an email message.
+    This model stores raw information about emails.
+    """
+
     message_id = models.CharField(
         max_length=255,
         unique=True,
@@ -293,6 +365,10 @@ class Email(models.Model):
         help_text=_("The subject of the email."),
     )
 
+    # Reverse relations
+    replies: models.QuerySet[Email]
+    personalization: EmailPersonalization | None
+
     class Meta:
         verbose_name = _("Email")
         verbose_name_plural = _("Emails")
@@ -302,15 +378,23 @@ class Email(models.Model):
 
 
 class EmailPersonalization(models.Model):
+    """
+    Personalization settings for an email.
+
+    Allows users to set personal tags, notes, and importance levels for individual emails.
+    """  # noqa: E501
+
     email: models.OneToOneField[Email] = models.OneToOneField(
         Email,
         on_delete=models.CASCADE,
         verbose_name=_("Email"),
         help_text=_("The email associated with this personalization."),
         editable=False,
+        related_name="personalization",
     )
 
     tags = TaggableManager(
+        through=UserTaggedItem,
         blank=True,
         verbose_name=_("Tags"),
         help_text=_("Tags associated with this email."),
@@ -333,13 +417,21 @@ class EmailPersonalization(models.Model):
         return f"Personalization for Email [{self.email}]"
 
 
-class EmailFolderPersonalizations(models.Model):
+class EmailFolderPersonalization(models.Model):
+    """
+    Personalization settings for an email folder.
+
+    Allows users to set personal tags, notes, and importance levels for individual email folders.
+
+    """  # noqa: E501
+
     folder: models.OneToOneField[EmailFolder] = models.OneToOneField(
         EmailFolder,
         on_delete=models.CASCADE,
         verbose_name=_("Email Folder"),
         help_text=_("The email folder associated with this personalization."),
         editable=False,
+        related_name="personalization",
     )
 
     display_color = models.CharField(
@@ -359,6 +451,7 @@ class EmailFolderPersonalizations(models.Model):
     )
 
     tags = TaggableManager(
+        through=UserTaggedItem,
         blank=True,
         verbose_name=_("Tags"),
         help_text=_("Tags associated with this email folder."),

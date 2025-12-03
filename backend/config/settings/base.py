@@ -95,6 +95,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "django_overtuned.users",
     "django_overtuned.user_tags",
+    "django_overtuned.emails",
+    "django_overtuned.exchange",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
