@@ -6,6 +6,9 @@ Email views allow users to list, retrieve, and filter their emails.
 """
 
 from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
@@ -21,6 +24,7 @@ from django_overtuned.emails.models import EmailAccount
 from django_overtuned.emails.models import EmailFolder
 
 
+@extend_schema(tags=["Emails"])
 class EmailViewSet(
     ListModelMixin,
     RetrieveModelMixin,
@@ -81,6 +85,84 @@ class EmailViewSet(
     permission_classes = [IsAuthenticated]
     queryset = Email.objects.all()
     lookup_field = "message_id"
+
+    @extend_schema(
+        summary="List emails",
+        description=(
+            "Retrieve a list of emails with filtering, search, and ordering "
+            "capabilities."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="folder",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter by folder ID",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="is_read",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                description="Filter by read status (true/false)",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="from_address",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter by sender address ID",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="search",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Search in subject and body (case-insensitive)",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="ordering",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Order results by field (date_sent, -date_sent, "
+                    "date_received, -date_received, subject, -subject)"
+                ),
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Limit number of results",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="offset",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Offset for pagination",
+                required=False,
+            ),
+        ],
+        responses={200: EmailListSerializer(many=True)},
+    )
+    def list(self, request, *args, **kwargs):
+        """List emails with filtering and search."""
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Retrieve email details",
+        description=(
+            "Get detailed information about a specific email including full "
+            "body content."
+        ),
+        responses={200: EmailDetailSerializer},
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve specific email with full content."""
+        return super().retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         """
@@ -187,6 +269,14 @@ class EmailViewSet(
 
         return queryset
 
+    @extend_schema(
+        summary="Get email with thread context",
+        description=(
+            "Retrieve an email with additional thread information including "
+            "replies and parent email."
+        ),
+        responses={200: EmailThreadSerializer},
+    )
     @action(detail=True, methods=["get"])
     def thread(self, request, message_id=None):
         """

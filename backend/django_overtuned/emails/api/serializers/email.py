@@ -6,6 +6,7 @@ Email represents individual email messages with their content, metadata,
 and relationships to addresses, folders, and other emails.
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from django_overtuned.emails.models import Email
@@ -127,6 +128,13 @@ class EmailThreadSerializer(EmailDetailSerializer):
     class Meta(EmailDetailSerializer.Meta):
         fields = [*EmailDetailSerializer.Meta.fields, "replies_count", "has_replies"]
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of direct replies to this email",
+            "readOnly": True,
+        },
+    )
     def get_replies_count(self, obj: Email) -> int:
         """
         Count the number of direct replies to this email.
@@ -139,6 +147,13 @@ class EmailThreadSerializer(EmailDetailSerializer):
         """
         return obj.replies.count()
 
+    @extend_schema_field(
+        {
+            "type": "boolean",
+            "description": "Whether this email has any replies",
+            "readOnly": True,
+        },
+    )
     def get_has_replies(self, obj: Email) -> bool:
         """
         Check if this email has any replies.

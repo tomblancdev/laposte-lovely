@@ -6,6 +6,7 @@ EmailAddresses stores unique email addresses that appear in emails
 (from, to, reply-to fields).
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from django_overtuned.emails.models import EmailAddresses
@@ -65,6 +66,13 @@ class EmailAddressesDetailSerializer(EmailAddressesSerializer):
             "emails_reply_to_count",
         ]
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of emails sent from this address",
+            "readOnly": True,
+        },
+    )
     def get_emails_sent_count(self, obj: EmailAddresses) -> int:
         """
         Count emails where this address is the sender (from_address).
@@ -77,6 +85,13 @@ class EmailAddressesDetailSerializer(EmailAddressesSerializer):
         """
         return obj.emails_from.count()
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of emails sent to this address",
+            "readOnly": True,
+        },
+    )
     def get_emails_received_count(self, obj: EmailAddresses) -> int:
         """
         Count emails where this address is a recipient (to_addresses).
@@ -89,6 +104,13 @@ class EmailAddressesDetailSerializer(EmailAddressesSerializer):
         """
         return obj.emails_to.count()
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of emails with this as reply-to address",
+            "readOnly": True,
+        },
+    )
     def get_emails_reply_to_count(self, obj: EmailAddresses) -> int:
         """
         Count emails where this address is the reply-to address.

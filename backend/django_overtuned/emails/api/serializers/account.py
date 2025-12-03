@@ -5,6 +5,7 @@ This module provides serializers for the EmailAccount model.
 EmailAccount represents an email account associated with a user (Gmail, Outlook, etc).
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from django_overtuned.emails.models import Email
@@ -57,6 +58,13 @@ class EmailAccountDetailSerializer(EmailAccountSerializer):
     class Meta(EmailAccountSerializer.Meta):
         fields = [*EmailAccountSerializer.Meta.fields, "folder_count", "email_count"]
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of folders in this email account",
+            "readOnly": True,
+        },
+    )
     def get_folder_count(self, obj: EmailAccount) -> int:
         """
         Calculate the total number of folders for this account.
@@ -69,6 +77,13 @@ class EmailAccountDetailSerializer(EmailAccountSerializer):
         """
         return obj.email_folders.count()
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Total number of emails across all folders in this account",
+            "readOnly": True,
+        },
+    )
     def get_email_count(self, obj: EmailAccount) -> int:
         """
         Calculate the total number of emails across all folders.

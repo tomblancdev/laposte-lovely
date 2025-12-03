@@ -5,6 +5,9 @@ This module provides API views for the EmailFolder model.
 EmailFolder views allow users to list and retrieve their email folders.
 """
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
@@ -19,6 +22,7 @@ from django_overtuned.emails.models import EmailAccount
 from django_overtuned.emails.models import EmailFolder
 
 
+@extend_schema(tags=["Email Folders"])
 class EmailFolderViewSet(
     ListModelMixin,
     RetrieveModelMixin,
@@ -76,6 +80,54 @@ class EmailFolderViewSet(
 
     permission_classes = [IsAuthenticated]
     queryset = EmailFolder.objects.all()
+
+    @extend_schema(
+        summary="List email folders",
+        description=(
+            "Retrieve a list of email folders with optional filtering by "
+            "account, parent, or name."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="account",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter by email account ID",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="parent",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description=(
+                    "Filter by parent folder ID (use 'null' for top-level folders)"
+                ),
+                required=False,
+            ),
+            OpenApiParameter(
+                name="search",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Search in folder name (case-insensitive)",
+                required=False,
+            ),
+        ],
+        responses={200: EmailFolderSerializer(many=True)},
+    )
+    def list(self, request, *args, **kwargs):
+        """List all folders for user's accounts."""
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Retrieve folder details",
+        description=(
+            "Get detailed information about a specific folder including statistics."
+        ),
+        responses={200: EmailFolderDetailSerializer},
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve specific folder with statistics."""
+        return super().retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         """
@@ -140,6 +192,24 @@ class EmailFolderViewSet(
         # Order by name for consistency
         return queryset.order_by("base_name")
 
+    @extend_schema(
+        summary="Get folder tree",
+        description=(
+            "Retrieve hierarchical folder tree structure with recursively "
+            "nested subfolders. Only returns top-level folders with all their "
+            "descendants nested in the 'subfolders' field."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="account",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Filter tree to specific account",
+                required=False,
+            ),
+        ],
+        responses={200: EmailFolderTreeSerializer(many=True)},
+    )
     @action(detail=False, methods=["get"])
     def tree(self, request):
         """
@@ -193,6 +263,12 @@ class EmailFolderViewSet(
         )
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Get folder subfolders",
+        description="Retrieve direct subfolders of a specific folder. "
+        "Returns only immediate children with their nested subfolders included.",
+        responses={200: EmailFolderTreeSerializer(many=True)},
+    )
     @action(detail=True, methods=["get"])
     def subfolders(self, request, pk=None):
         """

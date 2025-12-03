@@ -6,6 +6,9 @@ EmailAddresses views allow users to list and retrieve email addresses
 that appear in their emails.
 """
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import extend_schema
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -21,6 +24,7 @@ from django_overtuned.emails.models import EmailAddresses
 from django_overtuned.emails.models import EmailFolder
 
 
+@extend_schema(tags=["Email Addresses"])
 class EmailAddressesViewSet(
     ListModelMixin,
     RetrieveModelMixin,
@@ -70,6 +74,46 @@ class EmailAddressesViewSet(
 
     permission_classes = [IsAuthenticated]
     queryset = EmailAddresses.objects.all()
+
+    @extend_schema(
+        summary="List email addresses",
+        description=(
+            "Retrieve a list of email addresses that appear in the user's "
+            "emails. Useful for autocomplete and contact list features."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by email address (case-insensitive contains)",
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Limit number of results (useful for autocomplete)",
+                required=False,
+            ),
+        ],
+        responses={200: EmailAddressesSerializer(many=True)},
+    )
+    def list(self, request, *args, **kwargs):
+        """List all email addresses from user's emails."""
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="Retrieve email address details",
+        description=(
+            "Get detailed information about a specific email address including "
+            "usage statistics."
+        ),
+        responses={200: EmailAddressesDetailSerializer},
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve specific email address with statistics."""
+        return super().retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         """

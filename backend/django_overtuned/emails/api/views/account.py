@@ -18,6 +18,7 @@ from django_overtuned.emails.api.serializers.account import EmailAccountSerializ
 from django_overtuned.emails.models import EmailAccount
 
 
+@extend_schema(tags=["Email Accounts"])
 class EmailAccountViewSet(
     ListModelMixin,
     RetrieveModelMixin,
@@ -59,40 +60,35 @@ class EmailAccountViewSet(
     queryset = EmailAccount.objects.all()
 
     @extend_schema(
+        summary="List email accounts",
+        description=(
+            "Retrieve a list of email accounts owned by the authenticated user."
+        ),
         parameters=[
             OpenApiParameter(
                 name="search",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
-                description="Filter email accounts by name (case-insensitive contains search)",  # noqa: E501
+                description="Filter accounts by name (case-insensitive contains)",
                 required=False,
             ),
         ],
-        summary="List email accounts",
-        description="Retrieve a list of all email accounts for the authenticated user. "
-        "Results can be filtered using query parameters.",
-        tags=["Email Accounts"],
+        responses={200: EmailAccountSerializer(many=True)},
     )
     def list(self, request, *args, **kwargs):
-        """
-        List all email accounts for the current user.
-
-        Supports filtering by account name via the 'search' query parameter.
-        """
+        """List all email accounts for current user."""
         return super().list(request, *args, **kwargs)
 
     @extend_schema(
-        summary="Retrieve email account",
-        description="Retrieve detailed information about a specific email account, "
-        "including statistics such as total emails and unread count.",
-        tags=["Email Accounts"],
+        summary="Retrieve email account details",
+        description=(
+            "Get detailed information about a specific email account including "
+            "statistics."
+        ),
+        responses={200: EmailAccountDetailSerializer},
     )
     def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve detailed information for a specific email account.
-
-        Returns extended information including statistics.
-        """
+        """Retrieve specific email account details."""
         return super().retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):

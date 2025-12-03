@@ -6,6 +6,7 @@ EmailFolder represents folders/labels in email accounts (Inbox, Sent, etc.)
 and supports hierarchical folder structures.
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from django_overtuned.emails.models import EmailFolder
@@ -77,6 +78,36 @@ class EmailFolderTreeSerializer(EmailFolderSerializer):
     class Meta(EmailFolderSerializer.Meta):
         fields = [*EmailFolderSerializer.Meta.fields, "subfolders"]
 
+    @extend_schema_field(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "integer", "readOnly": True},
+                    "base_name": {"type": "string", "readOnly": True},
+                    "account": {"type": "integer", "readOnly": True},
+                    "parent": {
+                        "type": "integer",
+                        "nullable": True,
+                        "readOnly": True,
+                    },
+                    "subfolders": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Recursively nested folder structure",
+                        },
+                        "description": (
+                            "Child folders (recursively contains same structure)"
+                        ),
+                    },
+                },
+                "required": ["id", "base_name", "account", "subfolders"],
+            },
+            "description": "List of child folders with recursive subfolder structure",
+        },
+    )
     def get_subfolders(self, obj: EmailFolder) -> list[dict]:
         """
         Recursively serialize all subfolders.
@@ -125,6 +156,13 @@ class EmailFolderDetailSerializer(EmailFolderSerializer):
             "subfolder_count",
         ]
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Total number of emails in this folder",
+            "readOnly": True,
+        },
+    )
     def get_email_count(self, obj: EmailFolder) -> int:
         """
         Count total emails in this folder.
@@ -137,6 +175,13 @@ class EmailFolderDetailSerializer(EmailFolderSerializer):
         """
         return obj.emails.count()
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of unread emails in this folder",
+            "readOnly": True,
+        },
+    )
     def get_unread_count(self, obj: EmailFolder) -> int:
         """
         Count unread emails in this folder.
@@ -149,6 +194,13 @@ class EmailFolderDetailSerializer(EmailFolderSerializer):
         """
         return obj.emails.filter(is_read=False).count()
 
+    @extend_schema_field(
+        {
+            "type": "integer",
+            "description": "Number of direct child folders (non-recursive)",
+            "readOnly": True,
+        },
+    )
     def get_subfolder_count(self, obj: EmailFolder) -> int:
         """
         Count direct subfolders (non-recursive).
