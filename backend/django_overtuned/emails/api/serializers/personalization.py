@@ -10,6 +10,8 @@ without modifying the original email data.
 from libs.db.serializers import ColorFieldSerializer
 from rest_framework import serializers
 
+from django_overtuned.emails.models import Email
+from django_overtuned.emails.models import EmailFolder
 from django_overtuned.emails.models import EmailFolderPersonalization
 from django_overtuned.emails.models import EmailPersonalization
 from django_overtuned.user_tags.api.serializers import UserTaggitSerializer
@@ -53,7 +55,11 @@ class EmailPersonalizationSerializer(
         after the personalization record is created.
     """
 
-    tags = UserTagListSerializerField()
+    tags = UserTagListSerializerField(required=False)
+    email = serializers.PrimaryKeyRelatedField(
+        queryset=Email.objects.all(),
+        help_text="Primary key of the email to personalize",
+    )
 
     class Meta:
         model = EmailPersonalization
@@ -158,8 +164,12 @@ class EmailFolderPersonalizationSerializer(
         validated for correctness (value ranges, syntax, etc.).
     """
 
-    tags = UserTagListSerializerField()
-    display_color = ColorFieldSerializer()
+    tags = UserTagListSerializerField(required=False)
+    display_color = ColorFieldSerializer(required=False, allow_blank=True)
+    folder = serializers.PrimaryKeyRelatedField(
+        queryset=EmailFolder.objects.all(),
+        help_text="Primary key of the email folder to personalize",
+    )
 
     class Meta:
         model = EmailFolderPersonalization

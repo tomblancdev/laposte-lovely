@@ -40,8 +40,8 @@ class Theme(models.Model):
         default="#000000",
         help_text="Primary theme color"
     )
-    
-    background_color = ColorField( 
+
+    background_color = ColorField(
         max_length=50,
         blank=False,  # Required field
         help_text="Background color"
@@ -57,7 +57,7 @@ from utils.db.serializers import ColorFieldSerializer
 class ThemeSerializer(serializers.ModelSerializer):
     primary_color = ColorFieldSerializer()
     accent_color = ColorFieldSerializer(allow_blank=True)
-    
+
     class Meta:
         model = Theme
         fields = ['id', 'primary_color', 'accent_color']
@@ -218,7 +218,7 @@ The ColorField is used in the `EmailFolderPersonalization` model:
 class EmailFolderPersonalization(models.Model):
     folder = models.OneToOneField(EmailFolder, ...)
     display_name = models.CharField(max_length=255, ...)
-    
+
     display_color = ColorField(
         max_length=50,
         blank=True,
@@ -241,7 +241,7 @@ class EmailFolderPersonalizationSerializer(
 ):
     tags = UserTagListSerializerField()
     display_color = ColorFieldSerializer()  # Automatic validation!
-    
+
     class Meta:
         model = EmailFolderPersonalization
         fields = ["id", "folder", "display_name", "display_color", "tags"]

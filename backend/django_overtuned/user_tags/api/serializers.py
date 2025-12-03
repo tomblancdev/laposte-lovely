@@ -56,7 +56,7 @@ class UserTaggitSerializer(TaggitSerializer):
             tag_objects.append(tag)
 
         # Set the tags on the instance
-        instance.tags.set(*tag_objects)
+        instance.tags.set(tag_objects)
         return None
 
 

@@ -1,9 +1,7 @@
-import os
 from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
-from cryptography.fernet import Fernet
 
 from django_overtuned.emails.models import EmailFolder
 from django_overtuned.exchange.models import ExchangeAccount
@@ -212,7 +210,7 @@ class TestExchangeEmailAccount:
     def test_user_relationship(self, exchange_email_account: ExchangeEmailAccount):
         """Test user relationship."""
         assert exchange_email_account.user is not None
-        from django_overtuned.users.models import User  # noqa: PLC0415
+        from django_overtuned.users.models import User
 
         assert isinstance(exchange_email_account.user, User)
 
@@ -375,7 +373,7 @@ class TestExchangeEmailAccount:
 
     def test_inherits_from_email_account(self, exchange_email_account):
         """Test that ExchangeEmailAccount inherits from EmailAccount."""
-        from django_overtuned.emails.models import EmailAccount  # noqa: PLC0415
+        from django_overtuned.emails.models import EmailAccount
 
         assert isinstance(exchange_email_account, EmailAccount)
 

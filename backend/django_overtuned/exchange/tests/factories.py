@@ -1,11 +1,7 @@
-import os
-
 from factory import Faker
-from factory import LazyAttribute
 from factory import SubFactory
 from factory.django import DjangoModelFactory
 
-from django_overtuned.emails.tests.factories import EmailAccountFactory
 from django_overtuned.exchange.models import ExchangeAccount
 from django_overtuned.exchange.models import ExchangeEmailAccount
 from django_overtuned.users.tests.factories import UserFactory
@@ -17,7 +13,7 @@ class ExchangeAccountFactory(DjangoModelFactory[ExchangeAccount]):
     server_address = Faker("url")
     username = Faker("user_name")
     email_address = Faker("email")
-    password = "test_password_123"
+    password = "test_password_123"  # noqa: S105
 
     class Meta:
         model = ExchangeAccount

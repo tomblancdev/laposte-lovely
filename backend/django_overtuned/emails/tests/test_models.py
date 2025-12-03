@@ -350,7 +350,7 @@ class TestEmailPersonalization:
         user = personalization.get_user()
 
         # Manually create UserTags with the user
-        from django_overtuned.user_tags.models import UserTag  # noqa: PLC0415
+        from django_overtuned.user_tags.models import UserTag
 
         tag1 = UserTag.objects.create(name="urgent", user=user)
         tag2 = UserTag.objects.create(name="work", user=user)
@@ -427,7 +427,7 @@ class TestEmailFolderPersonalization:
         user = personalization.get_user()
 
         # Manually create UserTags with the user
-        from django_overtuned.user_tags.models import UserTag  # noqa: PLC0415
+        from django_overtuned.user_tags.models import UserTag
 
         tag1 = UserTag.objects.create(name="work", user=user)
         tag2 = UserTag.objects.create(name="archive", user=user)

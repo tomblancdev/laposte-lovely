@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.test import APIClient
 
 from django_overtuned.emails.models import Email
 from django_overtuned.emails.models import EmailAccount
@@ -12,6 +13,8 @@ from django_overtuned.emails.tests.factories import EmailFactory
 from django_overtuned.emails.tests.factories import EmailFolderFactory
 from django_overtuned.emails.tests.factories import EmailFolderPersonalizationFactory
 from django_overtuned.emails.tests.factories import EmailPersonalizationFactory
+from django_overtuned.users.models import User
+from django_overtuned.users.tests.factories import UserFactory
 
 
 @pytest.fixture
@@ -48,3 +51,20 @@ def email_personalization(db, email) -> EmailPersonalization:
 def email_folder_personalization(db, email_folder) -> EmailFolderPersonalization:
     """Fixture for creating an EmailFolderPersonalization instance."""
     return EmailFolderPersonalizationFactory(folder=email_folder)
+
+
+# API Test Fixtures
+
+
+@pytest.fixture
+def user(db) -> User:
+    """Fixture for creating a test user."""
+    return UserFactory()
+
+
+@pytest.fixture
+def api_client_authenticated(user) -> APIClient:
+    """Fixture for creating an authenticated API client."""
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client

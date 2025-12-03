@@ -207,7 +207,7 @@ HSLA_PATTERN = re.compile(
 )
 
 
-def validate_color(value: str) -> None:
+def validate_color(value: str) -> None:  # noqa: C901, PLR0911 TODO: refactor
     """
     Validate that the value is a valid color in any supported format.
 
